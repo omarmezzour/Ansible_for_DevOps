@@ -1,0 +1,71 @@
+---
+
+- tasks:
+    - name: Get Software for apt repository management.
+      apt: 
+          state: present
+          name:
+              - python3-apt 
+              - python3-pycurl
+    - name: Add ondrej repository for later versions of php.
+      apt_repository: repo='ppa:ondrej/php' update_cache=yes
+
+    - name: "Install Apache, MySQL, PHP, and other dependecies."
+      apt:
+        state: present
+        name:
+          - acl 
+          - git 
+          - curl 
+          - unzip
+          - sendmail
+          - apache2- 
+          - php8.2-common
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - php8.2-cli
+          - libpcre3-dev
+          - libapache2-mod-php8.2
+          - python3-mysqldb
+          - mysql-server
+
+    - name: Disable the firewall (since this is for local dev only).
+      service: name=ufw state=stopped
+    - name: "Start Apache, MySQL, and PHP."
+      service: "name={{ item }} state=started enabled=yes"
+      with_items:
+        - apache2
+        - mysql 
+
+
+    - name: Enable Apache write module (required for Drupal).
+      apache2_module: name=rewrite state=present
+      notify: restart apache
+  
+    - name: Add Apache virtualhost for Drupal.
+      template: 
+          src: "templates/drupal.test.conf.j"
+          dest: "/etc/apache2/sites-available/{{ domain }}.test.conf"
+          owner: root
+          group: root
+          mode: 0644
+      notify: restart apache
+
+    - name: Enable the Drupal site.
+      command: >
+          a2ensite {{ domain }}.test
+          creates=/etc/apache2/sites-enabled/{{ domain }}.test.conf
+      notify: restart apache
+
+    - name: Disable the default site.
+      command: >
+          a2dissite 000-default
+          removes=/etc/apache2/sites-enabled/000-default.conf
+      notify: restart apache

@@ -1,0 +1,43 @@
+---
+- name: Configure Logging Server
+  hosts: logging_server
+  become: true
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: sshd
+        state: restarted
+
+    - name: restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted
+
+  tasks:
+    - name: Apply ssh_hardening role
+      include_role:
+        name: ssh_hardening
+
+    - name: Apply user_management role
+      include_role:
+        name: user_management
+
+    - name: Apply firewall role
+      include_role:
+        name: firewall
+
+    - name: Configure rsyslog to listen on UDP 514
+      become: true
+      lineinfile:
+        path: /etc/rsyslog.conf
+        regexp: '^module(load="imudp")'
+        line: 'module(load="imudp")'
+      notify: restart rsyslog
+
+    - name: Configure rsyslog forwarding rules
+      become: true
+      template:
+        src: roles/logging/templates/rsyslog_forwarding_rules.j2
+        dest: /etc/rsyslog.d/99-forward.conf
+      notify: restart rsyslog

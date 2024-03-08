@@ -1,0 +1,6 @@
+---
+- name: Ensure logs are centralized
+  lineinfile:
+    path: /etc/rsyslog.d/
+    line: '*.info;mail.none;authpriv.none;cron.none   @192.168.56.4'
+  notify: restart rsyslog

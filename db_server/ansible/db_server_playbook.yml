@@ -1,0 +1,74 @@
+---
+- name: Configure Database Server
+  hosts: multi  
+  become: true
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
+
+    - name: restart postgresql
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted
+
+  tasks:
+    - name: Apply ssh_hardening role
+      include_role:
+        name: ssh_hardening
+
+    - name: Apply user_management role
+      include_role:
+        name: user_management
+
+    - name: Apply firewall role
+      include_role:
+        name: firewall
+
+    - name: Install PostgreSQL Database Server
+      become: true
+      apt:
+        name: postgresql
+        state: present
+      notify: restart postgresql
+
+    - name: Configure PostgreSQL
+      become: true
+      template:
+        src: roles/db_server/templates/postgresql.conf
+        dest: /etc/postgresql/16/main/postgresql.conf
+      notify: restart postgresql
+
+    - name: Create Database Backup Directory
+      become: true
+      file:
+        path: /var/backups/db_backups
+        state: directory
+        mode: '0700'
+
+    - name: Schedule Database Backup 
+      become: true
+      cron:
+        name: "Create Daily Database Backup"
+        job: "/opt/db_backups/backup_script.sh"
+        state: present
+
+    - name: Configure rsyslog to forward logs to the logging_server
+      become: true
+      template:
+        src: roles/logging/templates/rsyslog.conf.j2
+        dest: /etc/rsyslog.conf
+      notify: restart rsyslog
+
+  roles:
+    - ssh_hardening
+    - user_management
+    - firewall
+    - logging

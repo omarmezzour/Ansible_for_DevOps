@@ -1,0 +1,30 @@
+# roles/user_management/tasks/main.yml
+
+# Add your user management tasks here
+
+- name: Install psycopg2 package
+  become: true
+  apt:
+    name: python3-psycopg2
+    state: present
+
+# Add a delay to allow PostgreSQL to fully start
+- name: Delay before connecting to PostgreSQL
+  pause:
+    seconds: 30
+
+- name: Create Database User
+  become: true
+  postgresql_user:
+    db: my_database
+    name: postgres
+    password: anonym
+    state: present
+
+- name: Grant necessary privileges to the database user
+  become: true
+  postgresql_privs:
+    db: my_database
+    user: postgres
+    priv: ALL
+    state: present

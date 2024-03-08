@@ -1,0 +1,13 @@
+---
+
+- name: Allow SSH traffic
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+- name: Allow PostgreSQL traffic
+  ufw:
+    rule: allow
+    port: 5432
+    proto: tcp

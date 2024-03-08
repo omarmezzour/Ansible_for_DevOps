@@ -1,0 +1,7 @@
+---
+- name: Apply firewall role on Web App Server
+  - name: Allow HTTP traffic
+    ufw:
+      rule: allow
+      port: 80
+      proto: tcp

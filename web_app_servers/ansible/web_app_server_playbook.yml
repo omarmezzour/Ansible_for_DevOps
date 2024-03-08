@@ -1,0 +1,49 @@
+---
+- name: Configure Web App Servers
+  hosts: web_app_servers
+  become: true
+
+  handlers:
+    - name: restart ssh
+      service: 
+        name: sshd 
+        state: restarted
+
+    - name: restart apache2
+      service: 
+        name: apache2 
+        state: restarted
+
+  tasks:
+    - name: Apply ssh_hardening role
+      include_role:
+        name: ssh_hardening
+
+    - name: Apply user_management role
+      include_role:
+        name: user_management
+
+    - name: Apply firewall role
+      include_role:
+        name: firewall
+
+    - name: Install Apache
+      become: true
+      apt:
+        name: apache2
+        state: present
+      notify: restart apache2
+
+    - name: Configure Apache
+      become: true
+      template:
+        src: roles/webserver/templates/webserver.j2
+        dest: /etc/apache2/sites-available/000-default.conf
+      notify: restart apache2
+
+    - name: Configure rsyslog to forward logs to the logging_server
+      become: true
+      template:
+        src: roles/logging/templates/rsyslog_forwarding_rules.j2
+        dest: /etc/rsyslog.d/99-forward.conf
+      notify: restart rsyslog

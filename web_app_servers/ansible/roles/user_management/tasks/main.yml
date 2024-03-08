@@ -1,0 +1,14 @@
+---
+- name: Apply user_management role on Web App Server
+  - name: Create Web App User
+    become: true
+    user:
+      name: web_app_user
+      password: "{{ web_app_user_password | password_hash('sha512') }}"
+      state: present
+
+  - name: Add Web App User to sudoers
+    become: true
+    lineinfile:
+      path: /etc/sudoers
+      line: 'web_app_user ALL=(ALL) NOPASSWD:ALL'
